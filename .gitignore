@@ -1,0 +1,48 @@
+# Credentials and sensitive tokens - NEVER COMMIT
+*.token
+*.key
+*.pem
+*.pfx
+*.crt
+*credential*
+.databrickscfg
+*secret*
+*.env
+.env*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# Databricks bundle build artifacts
+.databricks/
+
+# IDE & OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
