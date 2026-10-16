@@ -1,0 +1,66 @@
+# =============================================================================
+# Lakeflow Job DAG Resource
+# Job: meridian_t06_job
+# End-to-end orchestrated data product DAG with quality gates and failure repair
+# =============================================================================
+
+resources:
+  jobs:
+    meridian_t06_job:
+      name: meridian_t06_job
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: batch_number
+          default: "1"
+        - name: rows_per_batch
+          default: "2500"
+        - name: simulate_failure
+          default: "false"
+
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: "UTC"
+        pause_status: PAUSED
+
+      email_notifications:
+        on_failure:
+          - architajha31@gmail.com
+
+      max_concurrent_runs: 1
+
+      tasks:
+        # Task 1: Landing Simulator - writes batch files to Managed Volume
+        - task_key: landing_simulator
+          notebook_task:
+            notebook_path: ../src/01_landing/landing_simulator.py
+            base_parameters:
+              catalog: ${var.catalog}
+              batch_number: "{{job.parameters.batch_number}}"
+              rows_per_batch: "{{job.parameters.rows_per_batch}}"
+
+        # Task 2: Lakeflow Declarative Pipeline - Bronze -> Silver -> Gold
+        - task_key: medallion_pipeline
+          depends_on:
+            - task_key: landing_simulator
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.meridian_t06_pipeline.id}
+
+        # Task 3: Visual Data Prep - Analyst transform (rolling 3-month return rate)
+        - task_key: visual_data_prep
+          depends_on:
+            - task_key: medallion_pipeline
+          notebook_task:
+            notebook_path: ../src/03_vdp/vdp_monthly_returns.py
+            base_parameters:
+              target_year: "2001"
+
+        # Task 4: Data Quality Gate - Enforces referential integrity, non-empty Gold, and uniqueness
+        - task_key: data_quality_gate
+          depends_on:
+            - task_key: visual_data_prep
+          notebook_task:
+            notebook_path: ../src/06_quality_gates/quality_gate.py
+            base_parameters:
+              catalog: ${var.catalog}
+              simulate_failure: "{{job.parameters.simulate_failure}}"

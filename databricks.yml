@@ -1,0 +1,39 @@
+# =============================================================================
+# Databricks Asset Bundle (DAB) Configuration
+# Project Meridian: Trainee 06 - Meridian Direct
+# =============================================================================
+
+bundle:
+  name: meridian_t06
+
+variables:
+  catalog:
+    description: "Unity Catalog name for Project Meridian Trainee 06"
+    default: "meridian_t06"
+  trainee_id:
+    description: "Two-digit trainee identifier"
+    default: "06"
+  warehouse_id:
+    description: "Databricks SQL Warehouse ID (2X-Small Serverless)"
+    default: "auto"
+
+include:
+  - resources/*.yml
+
+targets:
+  dev:
+    mode: development
+    default: true
+    variables:
+      catalog: "meridian_t06"
+    workspace:
+      root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+  prod:
+    mode: production
+    variables:
+      catalog: "meridian_t06"
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: ${workspace.current_user.userName}

@@ -1,0 +1,25 @@
+# =============================================================================
+# Lakeflow Spark Declarative Pipeline (formerly Delta Live Tables) Resource
+# Pipeline: meridian_t06_pipeline
+# Bronze -> Silver (Expectations & Quarantine & SCD2) -> Gold (Star Schema)
+# =============================================================================
+
+resources:
+  pipelines:
+    meridian_t06_pipeline:
+      name: meridian_t06_pipeline
+      target: gold
+      catalog: ${var.catalog}
+      continuous: false
+      channel: preview
+      serverless: true
+      configuration:
+        meridian.catalog: ${var.catalog}
+        pipelines.useServerless: "true"
+      libraries:
+        - notebook:
+            path: ../src/02_pipeline/01_bronze.py
+        - notebook:
+            path: ../src/02_pipeline/02_silver.py
+        - notebook:
+            path: ../src/02_pipeline/03_gold.py
