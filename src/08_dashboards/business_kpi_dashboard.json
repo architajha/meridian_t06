@@ -1,0 +1,108 @@
+{
+  "dashboard_name": "Meridian Direct - Business KPI Dashboard",
+  "business_unit": "Catalog sales and contact centres (Package 06)",
+  "publishing_settings": {
+    "run_as_mode": "viewer",
+    "justification": "Published using 'Run as viewer' so that Unity Catalog row-level security (call centre filtering) and column masks (cc_manager and cs_net_profit) are dynamically enforced based on each individual viewer's session and entitlements."
+  },
+  "datasets": [
+    {
+      "name": "kpi_metric_view_dataset",
+      "query": "SELECT * FROM meridian_t06.gold.mv_catalog_sales_kpis WHERE (:p_year = 'ALL' OR calendar_year = CAST(:p_year AS INT))"
+    },
+    {
+      "name": "vdp_monthly_trend_dataset",
+      "query": "SELECT * FROM meridian_t06.gold.vdp_call_center_monthly_returns ORDER BY calendar_month ASC"
+    }
+  ],
+  "parameters": [
+    {
+      "name": "p_year",
+      "type": "string",
+      "default": "ALL",
+      "description": "Calendar year filter"
+    }
+  ],
+  "filters": [
+    {
+      "name": "f_call_center",
+      "field": "call_center_name",
+      "dataset": "kpi_metric_view_dataset",
+      "type": "multi-select"
+    }
+  ],
+  "pages": [
+    {
+      "name": "Executive KPI Overview",
+      "layout": [
+        {
+          "widget_type": "text",
+          "title": "Governed KPI Dictionary",
+          "content": "### Meridian Direct - Governed Business Metric Definitions\n- **Total Net Sales**: Sum of net revenue ($) across completed catalog sales orders.\n- **Return Rate**: Strict ratio of total returned amount over total sales amount (`sum(returned_amount) / sum(net_sales_amount)`).\n- **Profit Margin**: Ratio of net profit to net sales (`sum(cs_net_profit) / sum(net_sales_amount)`). Masked for non-PII readers.\n- **On-Time Shipping %**: Proportion of order shipments dispatched within SLA duration.\n- **Items per Order**: Average basket depth (`sum(quantity) / count(distinct order_number)`)."
+        },
+        {
+          "widget_type": "counter",
+          "title": "Total Net Sales",
+          "dataset": "kpi_metric_view_dataset",
+          "measure": "SUM(total_net_sales)",
+          "format": "$#,##0"
+        },
+        {
+          "widget_type": "counter",
+          "title": "Return Rate",
+          "dataset": "kpi_metric_view_dataset",
+          "measure": "SUM(total_returned_amount) / NULLIF(SUM(total_net_sales), 0)",
+          "format": "0.0%"
+        },
+        {
+          "widget_type": "counter",
+          "title": "Net Profit Margin",
+          "dataset": "kpi_metric_view_dataset",
+          "measure": "SUM(total_net_profit) / NULLIF(SUM(total_net_sales), 0)",
+          "format": "0.0%"
+        },
+        {
+          "widget_type": "counter",
+          "title": "Avg Items Per Order",
+          "dataset": "kpi_metric_view_dataset",
+          "measure": "SUM(total_units_sold) / NULLIF(SUM(total_orders), 0)",
+          "format": "0.0"
+        },
+        {
+          "widget_type": "chart",
+          "chart_type": "line_and_bar",
+          "title": "Monthly Net Sales & Rolling Return Rate (VDP Output)",
+          "dataset": "vdp_monthly_trend_dataset",
+          "x_axis": "calendar_month",
+          "y_axes": [
+            {"column": "monthly_net_sales", "series_type": "bar", "name": "Monthly Sales ($)"},
+            {"column": "rolling_3m_return_rate", "series_type": "line", "name": "3-Month Rolling Return Rate (%)"}
+          ]
+        },
+        {
+          "widget_type": "chart",
+          "chart_type": "bar_horizontal",
+          "title": "Net Sales by Call Centre (Row-Filter Protected)",
+          "dataset": "kpi_metric_view_dataset",
+          "x_axis": "call_center_name",
+          "y_axis": "SUM(total_net_sales)"
+        },
+        {
+          "widget_type": "table",
+          "title": "Call Centre Operational Detail Breakdown",
+          "dataset": "kpi_metric_view_dataset",
+          "columns": [
+            "call_center_name",
+            "division_name",
+            "ship_mode_type",
+            "total_net_sales",
+            "return_rate",
+            "profit_margin",
+            "on_time_shipping_rate",
+            "items_per_order"
+          ]
+        }
+      ]
+    }
+  ]
+}
