@@ -18,6 +18,7 @@ resources:
       target: bronze
       continuous: false
       development: true
+      serverless: true
       libraries:
         - notebook:
             path: ./src/02_pipeline/01_bronze.py
