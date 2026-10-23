@@ -285,7 +285,7 @@ quarantine_cr = raw_cr.filter(
     F.col("cr_return_quantity").alias("return_quantity"),
     F.col("cr_return_amount").alias("return_amount"),
     F.when(F.col("cr_order_number").isNull() | F.col("cr_item_sk").isNull(), "NULL_KEY")
-     .when(F.col("cr_return_quantity") <= 0, "INVALID_RETURN_QUANTITY")
+     .when(F.col("cs_return_quantity") <= 0, "INVALID_RETURN_QUANTITY")
      .when(F.col("cr_return_amount") < 0.0, "NEGATIVE_RETURN_AMOUNT").otherwise("OTHER").alias("quarantine_reason"),
     F.col("_source_file_path"),
     F.col("_batch_id"),
