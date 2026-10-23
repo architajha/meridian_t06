@@ -1,6 +1,6 @@
 # Databricks notebook source
 import dlt
-from pyspark.sql.functions import current_timestamp, input_file_name
+from pyspark.sql.functions import col, current_timestamp
 
 def read_raw_stream(path):
     return (
@@ -8,7 +8,11 @@ def read_raw_stream(path):
         .format("cloudFiles")
         .option("cloudFiles.format", "json")
         .load(path)
-        .select("*", input_file_name().alias("_sq_source_file"), current_timestamp().alias("_sq_rcvd_at"))
+        .select(
+            "*", 
+            col("_metadata.file_path").alias("_sq_source_file"), 
+            current_timestamp().alias("_sq_rcvd_at")
+        )
     )
 
 @dlt.table(name="bronze_catalog_sales", comment="Raw streaming sales")
