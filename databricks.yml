@@ -19,13 +19,12 @@ resources:
       continuous: false
       development: true
       libraries:
-        # Runs your single pipeline DAG using your exact existing folder structure
-        - python:
-            file: ./src/02_pipeline/01_bronze.python
-        - python:
-            file: ./src/02_pipeline/02_silver.python
-        - python:
-            file: ./src/02_pipeline/03_gold.python
+        - notebook:
+            path: ./src/02_pipeline/01_bronze.python
+        - notebook:
+            path: ./src/02_pipeline/02_silver.python
+        - notebook:
+            path: ./src/02_pipeline/03_gold.python
 
   jobs:
     meridian_t06_job:
