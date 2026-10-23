@@ -1,39 +1,56 @@
-# =============================================================================
-# Databricks Asset Bundle (DAB) Configuration
-# Project Meridian: Trainee 06 - Meridian Direct
-# =============================================================================
-
 bundle:
   name: meridian_t06
 
 variables:
   catalog:
-    description: "Unity Catalog name for Project Meridian Trainee 06"
-    default: "meridian_t06"
-  trainee_id:
-    description: "Two-digit trainee identifier"
-    default: "06"
-  warehouse_id:
-    description: "Databricks SQL Warehouse ID (2X-Small Serverless)"
-    default: "auto"
-
-include:
-  - resources/*.yml
+    default: meridian_t06
 
 targets:
   dev:
     mode: development
     default: true
-    variables:
-      catalog: "meridian_t06"
-    workspace:
-      root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
 
-  prod:
-    mode: production
-    variables:
-      catalog: "meridian_t06"
-    workspace:
-      root_path: /Shared/.bundle/${bundle.name}/${bundle.target}
-    run_as:
-      user_name: ${workspace.current_user.userName}
+resources:
+  pipelines:
+    meridian_t06_pipeline:
+      name: meridian_t06_pipeline
+      catalog: ${var.catalog}
+      target: bronze
+      continuous: false
+      development: true
+      libraries:
+        # Runs your single pipeline DAG using your exact existing folder structure
+        - python:
+            file: ./src/02_pipeline/01_bronze.python
+        - python:
+            file: ./src/02_pipeline/02_silver.python
+        - python:
+            file: ./src/02_pipeline/03_gold.python
+
+  jobs:
+    meridian_t06_job:
+      name: meridian_t06_job
+      tasks:
+        - task_key: 01_landing_simulation
+          notebook_task:
+            notebook_path: ./src/01_landing/landing_simulator.python
+            base_parameters:
+              batch_num: "1"
+
+        - task_key: 02_medallion_pipeline
+          depends_on:
+            - task_key: 01_landing_simulation
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.meridian_t06_pipeline.id}
+
+        - task_key: 03_vdp_returns
+          depends_on:
+            - task_key: 02_medallion_pipeline
+          notebook_task:
+            notebook_path: ./src/03_vdp/vdp_monthly_returns.python
+
+        - task_key: 04_quality_gate
+          depends_on:
+            - task_key: 03_vdp_returns
+          notebook_task:
+            notebook_path: ./src/06_quality_gates/quality_gate.python
