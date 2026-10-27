@@ -5,7 +5,7 @@ sales = spark.table("meridian_t06.silver.silver_catalog_sales")
 returns = spark.table("meridian_t06.bronze.bronze_catalog_returns")
 
 vdp_df = (
-    sales.join(returns, "cs_order_number", "left")
+       sales.join(returns, col("cs_order_number") == col("cr_order_number"), "left")
     .groupBy("cs_call_center_sk", "cs_sold_date_sk")
     .agg(
         _sum("cs_sales_price").alias("total_sales"),
