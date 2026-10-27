@@ -1,8 +1,7 @@
 # Databricks notebook source
-# Databricks notebook source
 from pyspark.sql.functions import col, sum as _sum
 
-sales = spark.table("meridian_t06.bronze.silver_catalog_sales")
+sales = spark.table("meridian_t06.silver.silver_catalog_sales")
 returns = spark.table("meridian_t06.bronze.bronze_catalog_returns")
 
 vdp_df = (
